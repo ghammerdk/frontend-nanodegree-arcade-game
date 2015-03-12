@@ -1,35 +1,34 @@
 // Enemies our player must avoid
-var Enemy = function(no, x, y, speed) {
+var Enemy = function() {
     // Variables applied to each of our instances go here,
     // we've provided one for you to get started
-	this.enemyno = no;
-	this.x = x;
-	this.y = y;
-	this.speed = speed;
+	this.no = 0;
+	this.x = -1;
+	this.y = 0;
+	this.speed = 1;
 	this.state = '';
-	this.lane = 0;
+	this.lane = -1;
     // The image/sprite for our enemies, this uses
     // a helper we've provided to easily load images
     this.sprite = 'images/enemy-bug.png';
-	this.setposition = function(x,y) {
+	//
+	// The following functions are for debuging purposes
+	this.setno = function(no) { //provide each enemy with a number
+		this.no = no;
+	}
+	this.setposition = function(x,y) { //set position explicit
 		this.x = x;
 		this.y = y;
 	}
-	this.getx = function() {
+	this.getx = function() { // get the x position
 		return this.x;
 	}
-	this.gety = function() {
+	this.gety = function() { // get the y position
 		return this.y;
 	}
-	this.setspeed = function(speed) {
+	this.setspeed = function(speed) { // set the speed explicit
 		this.speed = speed;
 	}
-}
-
-function sleep(time) {
-	time += new Date().getTime();
-	while (new Date() < time){}
-	return true;
 }
 	
 // Update the enemy's position, required method for game
@@ -39,9 +38,9 @@ Enemy.prototype.update = function(dt) {
     // which will ensure the game runs at the same speed for
     // all computers.
 
-	//state handling
+	//state handling - this is where the enemy behaviour is controlled
 	if (this.state != 'endofgame') {
-		console.log('enemy# ' + this.enemyno + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
+		console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
 	}
 	switch (this.state) {
 		case "":
@@ -74,9 +73,8 @@ Enemy.prototype.update = function(dt) {
 			break;
 	}
 	//setTimeout(function(){ ctx.drawImage(Resources.get(this.sprite), this.x*dt, this.y*dt);  }, 3000);
-	if (this.x >= 0) {
+	if (this.x >= 0) { // don't display enemies outside the view
 		ctx.drawImage(Resources.get(this.sprite), this.x*dt, this.y*dt); 
-		//alert('image redrawed');
 		sleep(300/this.speed); // delay
 	}
 }
@@ -86,8 +84,8 @@ Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x*101, this.y*83);
 }
 
-// Now write your own player class
-// This class requires an update(), render() and
+// This is the player class
+// It requires an update(), render() and
 // a handleInput() method.
 function Player(x, y) {
 	this.sprite = 'images/char-boy.png';
@@ -124,30 +122,39 @@ function Player(x, y) {
 	};
 }
 
-// Now instantiate your objects.
-// Place all enemy objects in an array called allEnemies
-var enemy = new Enemy(1, -1, 1, 1);
-var enemy1 = new Enemy(2, -1, 2, 2);
-var enemy2 = new Enemy(3, -1, 3, 3);
-var enemy3 = new Enemy(4, -1, 3, 1);
-var allEnemies = [];
-allEnemies.push(enemy);
-allEnemies.push(enemy1);
-allEnemies.push(enemy2);
-allEnemies.push(enemy3);
+function sleep(time) {
+	time += new Date().getTime();
+	while (new Date() < time){}
+	return true;
+}
 
-var obj = Object.create(Enemy.prototype);
-var obj = clone(enemy);
-allEnemies.push(obj);
-//allEnemies.push(Object.create(Enemy.prototype));
-//allEnemies.push(Object.create(Enemy.prototype));
-//allEnemies.push(Object.create(Enemy.prototype));
+function laneno() {
+	var lane = Math.random()*3;
+	console.log('laneno ' + lane);
+	return lane;
+}
+
+function speed() {
+	return Math.random()*3;
+}
+
+// Now instantiate the objects
+// The enemy objects are placed in an array
+// We create a single instance
+var enemy = new Enemy();
+// Set up the array
+var allEnemies = [];
+var number_of_enemies = 1;
+for (i = 0; i < number_of_enemies; i++) { 
+	allEnemies.push(clone(enemy)); // and clone the enemies we need
+	allEnemies[i].setno(i); // setting the enemy number
+}
 
 // Place the player object in a variable called player
 var player = new Player(2,5);
 
-// This listens for key presses and sends the keys to your
-// Player.handleInput() method. You don't need to modify this.
+// A listener is set up for key presses and sends the keys to the
+// Player.handleInput() method.
 document.addEventListener('keyup', function(e) {
     var allowedKeys = {
         37: 'left',
