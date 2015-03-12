@@ -134,9 +134,7 @@ var Engine = (function(global) {
                  */
                 ctx.drawImage(Resources.get(rowImages[row]), col * 101, row * 83);
             }
-        }
-
-
+        } 
         renderEntities();
     }
 
@@ -149,7 +147,9 @@ var Engine = (function(global) {
          * the render function you have defined.
          */
         allEnemies.forEach(function(enemy) {
-            enemy.render();
+			if (enemy.state != 'endofgame') {
+				enemy.render();
+			}
         });
 
         player.render();
