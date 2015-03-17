@@ -4,8 +4,8 @@ var Enemy = function() {
     // we've provided one for you to get started
 	this.no = 0;
 	this.x = -1;
-	this.y = 0;
-	this.speed = 1;
+	this.y = laneno();
+	this.speed = speed();
 	this.state = '';
 	this.lane = -1;
     // The image/sprite for our enemies, this uses
@@ -39,36 +39,45 @@ Enemy.prototype.update = function(dt) {
     // all computers.
 
 	//state handling - this is where the enemy behaviour is controlled
-	if (this.state != 'endofgame') {
-		console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
-	}
 	switch (this.state) {
 		case "":
-			//this.x = 0;
-			if (this.y < 1) this.y = 1;
+			this.x = -1;
 			if (player.getstate() != 'waiting') this.state = "waiting";
 			break;
 		case "waiting":
-			//console.log();
-			wannachase = Math.random();
-			if (wannachase > 0.5) {
-				this.state = "chasing"
+			if(steppingstone(this.no, 0, this.y) == 'free') {
+				wannachase = Math.random();
+				if (wannachase > 0.5) {
+					this.state = "chasing"
+				};
 			};
 			break;
 		case "chasing":
-			this.x++;
-			if (this.x > 6) { this.state = 'offscreen'} 
-			//console.log();
-			if (collision() == true) {
-				this.state = "gothim"
-			};
-			break;
+			if (this.x < 7) { // x>=7 is outside the screen
+				console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
+			}
+			if(steppingstone(this.no, this.x, this.y) == 'player') {
+				this.state = "gothim";
+			} else {
+				switch (whatsup = steppingstone(this.no, this.x+1, this.y)) { // look one step ahead
+				case 'enemy':
+					// cannot proceed, the way ahead is blocked by another enemy
+					break;
+				case 'player':
+					this.x++; 
+					break;
+				case 'free':
+					this.x++;
+					break;
+				}
+			}
+			break;			
 		case "offscreen":
-			console.log();
+			console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
 			this.state = 'endofgame';
 			break;
 		case "gothim":
-			console.log();
+			console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
 			this.state = "endofgame";
 			break;
 	}
@@ -111,13 +120,14 @@ function Player(x, y) {
 	this.handleInput = function(key) {
 		//console.log(key + ' x ' + this.x + ', y ' + this.y);
 		if (key == 'left') {this.x--;};
-		if (key == 'up')   {this.y--; if (this.state='waiting') { this.state='crossing'}; };
+		if (key == 'up')   {this.y--; if (this.state=='waiting' && this.y < 4) { this.state='crossing'}; };
 		if (key == 'right') {this.x++;};
 		if (key == 'down') {this.y++;};
 		if (this.x<0) { this.x=0};
 		if (this.y<0) { this.y=0};
 		if (this.x>4) { this.x=4};
 		if (this.y>5) { this.y=5};
+		console.log('player    state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
 		return true;
 	};
 }
@@ -128,26 +138,42 @@ function sleep(time) {
 	return true;
 }
 
-function laneno() {
+function laneno() { // randomly select one of 3 lanes
 	var lane = Math.random()*3;
-	console.log('laneno ' + lane);
+	lane = lane - (lane % 1);
+	lane = lane + 1;
 	return lane;
 }
 
-function speed() {
+function speed() { // randomly select on of 3 speed factors
 	return Math.random()*3;
 }
 
-// Now instantiate the objects
+function steppingstone(no, x, y) {
+	//if player on stone
+	if (x == player.getx() && y == player.gety()) {
+			return 'player';
+	}
+	//if enemy on stone
+	allEnemies.forEach(function(enemy) {
+		if (x == enemy.getx() && y == enemy.gety()) {
+				return 'enemy';
+		};
+	});
+	return 'free';
+}
+
+
+// The objects are instantiated
 // The enemy objects are placed in an array
 // We create a single instance
 var enemy = new Enemy();
 // Set up the array
 var allEnemies = [];
-var number_of_enemies = 1;
+var number_of_enemies = 4;
 for (i = 0; i < number_of_enemies; i++) { 
 	allEnemies.push(clone(enemy)); // and clone the enemies we need
-	allEnemies[i].setno(i); // setting the enemy number
+	allEnemies[i].setno(i+1); // setting the enemy number
 }
 
 // Place the player object in a variable called player
@@ -167,11 +193,9 @@ document.addEventListener('keyup', function(e) {
 
 function collision() {
 	allEnemies.forEach(function(enemy) {
-		if (player.getx() == enemy.getx()) {
-			if (player.gety() == enemy.gety()) {
+		if (player.getx() == enemy.getx() && player.gety() == enemy.gety()) {
 				console.log('collision: x ' + player.getx() + ', y ' + player.gety());
 				return true;
-			};
 		};
 	});
 	return false;
@@ -186,3 +210,31 @@ function clone(obj) {
   });
   return copy;
 }
+
+// Gatekeeper to manage enemy injection
+var Gatekeeper = function() {
+	var lanes = ['free', 'free', 'free'];
+	this.get = function() {
+		for(i=0;i<lanes.length;i++) {
+			if (lanes[i] == 'free') {
+				lanes[i] = 'taken'
+				return i;
+			}
+		}
+		return -1;
+	}
+	this.free = function(i) {
+		lanes[i] == 'free';
+	}
+	this.init = function() {
+		for(i=0;i<lanes.length;i++) {
+			lanes[i] = 'free';
+		}
+	}
+}
+//var gatekeeper = new Gatekeeper();
+//gatekeeper.init();
+//gatekeeper.free(0);
+//var i = gatekeeper.get();
+
+
