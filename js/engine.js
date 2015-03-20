@@ -23,7 +23,10 @@ var Engine = (function(global) {
         win = global.window,
         canvas = doc.createElement('canvas'),
         ctx = canvas.getContext('2d'),
-        lastTime;
+        lastTime,
+		resetgame = function() {
+			init();
+		};
 
     canvas.width = 505;
     canvas.height = 606;
@@ -67,6 +70,7 @@ var Engine = (function(global) {
         reset();
         lastTime = Date.now();
         main();
+		console.log('engine.init: called');
     }
 
     /* This function is called by main (our game loop) and itself calls all
@@ -79,8 +83,7 @@ var Engine = (function(global) {
      * on the entities themselves within your app.js file).
      */
     function update(dt) {
-        updateEntities(dt);
-        // checkCollisions();
+		updateEntities(dt);
     }
 
     /* This is called by the update function  and loops through all of the
@@ -147,11 +150,8 @@ var Engine = (function(global) {
          * the render function you have defined.
          */
         allEnemies.forEach(function(enemy) {
-			if (enemy.state != 'endofgame') {
 				enemy.render();
-			}
         });
-
         player.render();
     }
 
@@ -160,7 +160,6 @@ var Engine = (function(global) {
      * those sorts of things. It's only called once by the init() method.
      */
     function reset() {
-        // noop
     }
 
     /* Go ahead and load all of the images we know we're going to need to
@@ -172,7 +171,12 @@ var Engine = (function(global) {
         'images/water-block.png',
         'images/grass-block.png',
         'images/enemy-bug.png',
-        'images/char-boy.png'
+        'images/char-boy.png',
+		'images/char-boy-dying1.jpg',
+		'images/char-boy-dying2.jpg',
+		'images/char-boy-dying3.jpg',
+		'images/char-boy-dying4.jpg',
+		'images/heart.png'
     ]);
     Resources.onReady(init);
 
