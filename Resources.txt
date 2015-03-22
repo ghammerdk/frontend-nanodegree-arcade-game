@@ -1,0 +1,32 @@
+Resources used for the Arcade Game Clone Project - Copenhagen, March
+
+Websites
+https://developer.mozilla.org/en-US/docs/Web/CSS/Reference
+http://cisdal.com/publishing.html
+http://validator.w3.org/#validate_by_input
+https://developer.chrome.com/home/devtools-pillar
+https://developer.chrome.com/devtools/docs/dom-and-styles
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
+https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5
+http://javascript.info/tutorial/searching-elements-dom
+https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Manipulating_video_using_canvas
+http://www.w3schools.com/html/
+
+Books
+A Software Engineer Learns HTML5 JavaScript & jQuery: Dane Cameron
+
+Forums
+http://stackoverflow.com/
+ 
+Blog posts
+N/A 
+
+Github repositories
+N/A
+
+Other
+N/A
+
+Github repository link
+
+

@@ -26,4 +26,9 @@ Frogger has been tested with the Chrome, Firefox, Internet Explorer and Safari b
 It failed initially with Firefox and Internet explorer due to js variables wre found undefined. 
 Frogger now runs under these browsers after changing the order in which various js files was included.
 
+
+Frogger is available from github:
+https://github.com/ghammerdk/frontend-nanodegree-arcade-game
+
+
 Copenhagen, March 22, 2015.
