@@ -1,14 +1,23 @@
 //constants
-var config = function() {
-	SRCWIDTH = 5;
-	SRCHEIGHT = 6;
-	ROADWIDTH = SRCWIDTH;
-	ROADHEIGHT = 3;
-	GRASSWIDTH = scrwidth;
-	GRASSHEIGHT = 2;
-	SCRXFACTOR = 101;
-	SCRYFACTOR = 83;
+var config = {
+	FROGGER:'FROGGER',
+	SCRWIDTH:5, // screen is a 5 x 6 matrix
+	SCRHEIGHT:6,
+	WATERROW:0,
+	ROADWIDTH:5,
+	ROADHEIGHT:3,
+	ROADROW0:1,
+	ROADROWN:3,
+	GRASSWIDTH:5,
+	GRASSHEIGHT:2,
+	GRASSROW0:4,
+	GRASSROWN:5,
+	SCRXFACTOR:101,
+	SCRYFACTOR:83,
+	NOOFENEMIES:2
 }
+
+var player = new Player(2,5);
 
 // Enemies our player must avoid
 var Enemy = function() {
@@ -67,7 +76,7 @@ Enemy.prototype.update = function(dt) {
     // You should multiply any movement by the dt parameter
     // which will ensure the game runs at the same speed for
     // all computers.
-
+	
 	// Enemy state handling - this is where enemy behaviour is controlled
 	switch (this.state) {
 		case "":
@@ -111,12 +120,11 @@ Enemy.prototype.render = function() {
 // It requires an update(), render() and
 // a handleInput() method.
 function Player(x, y) {
-	this.sprite = 'images/char-boy.png';
+	this.sprite = 'images/char-boy.png'
+	this.collision_sprite = 'images/char-boy-inv.png';
 	this.x = x;
 	this.y = y;
 	this.state = "waiting";
-	
-	alert('Start game using the arrow keys');
 	this.getx = function() {
 		return this.x;
 	}
@@ -137,21 +145,22 @@ function Player(x, y) {
 	}
 	this.update = function(dt) {
 		if (this.state == 'dead') resetGame();
+		if (this.state == 'winner') resetGame();
 		if (checkCollisions() == false) {
 			checkWater();
 		}
+		if (checkEndofgame() == true) resetGame();
 		return true;
 	};
 	this.render = function() {
 		if (this.getstate() == 'dying') {
-			ctx.drawImage(Resources.get('images/char-boy.png'), this.x*101, this.y*83); 
+			ctx.drawImage(Resources.get('images/char-boy-inv.png'), this.x*101, this.y*83); 
 			console.log('player dying at x ' + this.x + ', y ' + this.y);
 			this.setstate('dead');
 			return true;
 		}
 		if (this.getstate() == 'dead') {
 			console.log('player now dead at x ' + this.x + ', y ' + this.y);
-			alert('Got you!!');	
 			this.setstate('waiting');
 			resetGame();
 			return true;
@@ -193,7 +202,7 @@ function laneno() { // randomly select one of 3 lanes
 }
 
 function speed() { // randomly select on of 3 speed factors
-	return Math.random()*3;
+	return Math.random()*2; // was 3
 }
 
 function checkFreespace(x, y) { // checxk for free space to avoid enemies occupy the same spot
@@ -206,19 +215,20 @@ function checkFreespace(x, y) { // checxk for free space to avoid enemies occupy
 }
 
 // The objects are instantiated
-// The enemy objects are placed in an array
+// The enemy objects are placed in an arraysleep
 // We create a single instance
 var enemy = new Enemy();
 // Set up the array
 var allEnemies = [];
-var number_of_enemies = 2;
+var number_of_enemies = config.NOOFENEMIES;
 for (i = 0; i < number_of_enemies; i++) { 
 	allEnemies.push(clone(enemy)); // and clone the enemies we need
 	allEnemies[i].setno(i+1); // set the enemy number
 }
-
 // Place the player object in a variable called player
-var player = new Player(2,5);  // start position parameters
+var player = new Player(2,5);  // Player instance wit start position parameters
+
+alert('Start the game using the arrow keys');
 
 // A listener is set up for key presses and sends the keys to the
 // Player.handleInput() method.
@@ -230,18 +240,19 @@ document.addEventListener('keyup', function(e) {
         40: 'down'
     };
     player.handleInput(allowedKeys[e.keyCode]);
+	player.render();
 });
 
-function checkEndofgame() { !!!!!!!!!!
-	console.log('check fro End of game at x ' + player.getx() + ', y ' + player.gety());	
+function checkEndofgame() { // are all the enemies off the screen?
+	console.log('check for lack of enemies at x ' + player.getx() + ', y ' + player.gety());	
 	var ctr = allEnemies.length;
 	allEnemies.forEach(function(enemy) {
-//		if (enemy.getstate() == 'offscreen') {
-		if (enemy.getx() > 4) {
+		if (enemy.getState() == 'offscreen') {
+//		if (enemy.getx() > 4) {
 			ctr--;
 		}
 	});
-	if (ctr == 0) resetGame();
+	if (ctr == 0) { return true } else { return false };
 }
 
 function checkCollisions() { // check that the player has collided with one of the enemies
@@ -257,25 +268,34 @@ function checkCollisions() { // check that the player has collided with one of t
 };
 
 function checkWater() { // check whether the player is in the water
-	if (player.gety() < 1) {
-		alert('You drowned!!');	
-		console.log('the player drowned: x ' + player.getx() + ', y ' + player.gety());	
-		resetGame();
+	if (player.gety() < 1) { // we are in the water
+		//player.render();
+		console.log('the player reached the water: x ' + player.getx() + ', y ' + player.gety());
+		player.setstate('winner');
 		return true;
 	}
 	return false;
 };
 
 function resetGame() { // reset the game either because the player was caught or all the enemies are off the screen
-	console.log('game reset');	
+	switch (player.getstate()) {
+			case "winner":
+				alert('Congratulation, wet but alive!!');
+				break;
+			case "dead":
+				alert('You are so history!!');
+				break;
+			default:
+				alert('Game over');
+				break;
+	}
 	allEnemies.forEach(function(enemy) {
 		enemy.reset();
 	});
 	player.setx(2); // reset player
 	player.sety(5);
 	player.setstate('waiting');
-	alert('Game reset');
-};
+};	
 
 function clone(obj) { // clone code inspired by internet search
   var copy = Object.create(Object.getPrototypeOf(obj));
