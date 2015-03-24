@@ -1,0 +1,15 @@
+app.js:215 player right x 3, y 5
+2015-03-24 10:11:32.299app.js:215 player right x 4, y 5
+2015-03-24 10:11:33.651app.js:215 player up x 4, y 4
+2015-03-24 10:11:33.785app.js:205 player now crossing at x 4, y 3
+2015-03-24 10:11:33.785app.js:215 player up x 4, y 3
+2015-03-24 10:11:33.931app.js:215 player up x 4, y 2
+2015-03-24 10:11:33.956app.js:118 enemy# 1, state chasing x -1 y 2.375937427394092
+2015-03-24 10:11:33.956app.js:118 enemy# 3, state chasing x -1 y 1.8730306138750166
+2015-03-24 10:11:33.956app.js:118 enemy# 4, state chasing x -1 y 1.3333219347987324
+2015-03-24 10:11:34.072app.js:215 player up x 4, y 1
+2015-03-24 10:11:34.123app.js:118 enemy# 1, state chasing x 0 y 1
+2015-03-24 10:11:34.123app.js:118 enemy# 3, state chasing x 0 y 3
+2015-03-24 10:11:34.123app.js:118 enemy# 4, state chasing x 0 y 2
+2015-03-24 10:11:34.215app.js:215 player up x 4, y 0
+2015-03-24 10:11:34.223app.js:258 the player reached the water: x 4, y 0

@@ -1,0 +1,19 @@
+app.js:118 enemy# 3, state chasing x 2 y 3
+2015-03-24 10:14:06.151app.js:118 enemy# 4, state chasing x 1 y 3
+2015-03-24 10:14:06.223app.js:215 player down x 2, y 5
+2015-03-24 10:14:06.316app.js:118 enemy# 1, state chasing x 3 y 3
+2015-03-24 10:14:06.316app.js:118 enemy# 2, state chasing x 3 y 3
+2015-03-24 10:14:06.316app.js:118 enemy# 3, state chasing x 3 y 3
+2015-03-24 10:14:06.316app.js:118 enemy# 4, state chasing x 2 y 3
+2015-03-24 10:14:06.484app.js:118 enemy# 1, state chasing x 4 y 3
+2015-03-24 10:14:06.484app.js:118 enemy# 2, state chasing x 4 y 3
+2015-03-24 10:14:06.484app.js:118 enemy# 3, state chasing x 4 y 3
+2015-03-24 10:14:06.484app.js:118 enemy# 4, state chasing x 3 y 3
+2015-03-24 10:14:06.650app.js:118 enemy# 1, state chasing x 5 y 3
+2015-03-24 10:14:06.651app.js:118 enemy# 2, state chasing x 5 y 3
+2015-03-24 10:14:06.651app.js:118 enemy# 3, state chasing x 5 y 3
+2015-03-24 10:14:06.651app.js:118 enemy# 4, state chasing x 4 y 3
+2015-03-24 10:14:06.817app.js:131 enemy# 1, state offscreen x 6 y 3
+2015-03-24 10:14:06.817app.js:131 enemy# 2, state offscreen x 6 y 3
+2015-03-24 10:14:06.817app.js:131 enemy# 3, state offscreen x 6 y 3
+2015-03-24 10:14:06.818app.js:118 enemy# 4, state chasing x 5 y 3
