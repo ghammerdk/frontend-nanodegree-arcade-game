@@ -37,12 +37,13 @@ var config = {
 	GRASSEPOS:5*83,
 	PLSTARTPOSX:2*101,
 	PLSTARTPOSY:5*83,
-	NOOFENEMIES:2,
+	NOOFENEMIES:4,
 	SCRXSTEP:101,
 	SCRYSTEP:83,
 	SCRXFACTOR:1,
 	SCRYFACTOR:1,
-	ENEMYDELAY:1
+	ENEMYDELAY:1,
+	NOOFLANES:3
 };
 
 var player = new Player(config.PLSTARTPOSX, config.PLSTARTPOSY); // Declare the player with start position
@@ -50,19 +51,23 @@ var player = new Player(config.PLSTARTPOSX, config.PLSTARTPOSY); // Declare the 
 // Enemies our player must avoid
 var Enemy = function(no) {
 	this.no = no;
-	this.x = -1*config.SCRXSTEP;
-	this.y = 1*config.SCRYSTEP;
-	this.delay = config.ENEMYDELAY;
+	this.x = -config.SCRXSTEP*no;
+	this.y = config.SCRYSTEP;
+	this.lane = -1;
 	this.remdelay = 0;
-	this.speed = speed();
+	this.speed = this.getSpeed();
 	this.state = '';
-    this.sprite = 'images/enemy-bug.png';
+	this.sprite = 'images/enemy-bug.png';
+    console.log('enemy# ' + this.no + ', state ' + this.state + ' at x ' + this.x + ' y ' + this.y);
 };
 //
 // Enemy functions
 //
 Enemy.prototype.setNo = function(no) { //provide each enemy with a number
 	this.no = no;
+};
+Enemy.prototype.getNo = function () {
+    return this.no;
 };
 Enemy.prototype.setPosition = function(x,y) { 
 	this.x = x;
@@ -89,31 +94,29 @@ Enemy.prototype.getState = function() {
 Enemy.prototype.setSpeed = function(speed) {
 	this.speed = speed;
 };
-Enemy.prototype.setLaneno = function() { // select a lane
-	var lane = Math.trunc(Math.random()*3) + 1;
-	lane = lane*config.SCRYSTEP;
-	return lane;
-};
-function speed() { // select speed factor
+Enemy.prototype.getSpeed = function() {
 	return Math.random()*2;
 };
 
 Enemy.prototype.resetGame = function() {
-		this.x = -1*config.SCRXSTEP;
-		this.y = Math.random()*3;	
-		this.state = '';
-		this.speed = speed();
+    this.x = -config.SCRXSTEP * this.no;
+    this.y = config.SCRYSTEP;
+    this.lane = -1;
+	this.state = 'waiting';
+	this.speed = this.getSpeed();
 };
-Enemy.prototype.checkFreespace = function(no, x, y) { // check for free space
-	returnvalue = true;
-	allEnemies.forEach(function(enemy) {
-		if (x == (enemy.getX()) && (y == enemy.getY()) && (no != enemy.no)) { // place taken
-			console.log('checkFreespace: enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
-			returnvalue = false;
-			return;
-		};
-	});
-	return returnvalue;
+Enemy.prototype.checkTaken = function (no, x, y) { // check for free place
+//    console.log('checkFreespace: enemy# ' + no + ' x ' + x + ' y ' + y);
+	for (i = 0; i < allEnemies.length; i++) {
+//	    var diff = allEnemies[i].getX() - (x + config.SCRXSTEP); 
+//	    console.log('checkFreespace: for enemy# ' + allEnemies[i].getNo() + ', state ' + allEnemies[i].getState() + ' x ' + allEnemies[i].getX() + ' y ' + allEnemies[i].getY()+ ' diff ' + diff);
+	    if ((y == allEnemies[i].getY()) && (x + config.SRXSTEP >= allEnemies[i].getX()) && (no != allEnemies[i].no)) { // place taken	
+	        console.log('checkFreespace: taken enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' + this.y);
+	        return false;
+	    };
+	};
+//	console.log('checkFreespace: free enemy# ' + no + '  x ' + x + ' y ' + y);
+	return true;
 };
 	
 // Update the enemy's position, required method for game
@@ -123,15 +126,18 @@ Enemy.prototype.update = function(dt) {
 	this.remdelay=this.delay;
 	// Enemy state handling - this is where enemy behaviour is controlled
 	switch (this.state) {
-		case "":
-		case "waiting": // wait for the player to appear on the road
-			if(player.getY() < config.GRASSSPOS) { // player is on the road
-				if (Math.random() < (1/config.NOOFENEMIES)) { // start chasing (maybe)
-					this.state = "chasing"
-					this.x = 0;
-					this.y = Math.trunc(this.y)
-					console.log('enemy# ' + this.no + ', state ' + this.state + ' at x ' + this.x + ' y ' +  this.y);
-				};
+	    case "":
+	    case "waiting": // wait for the player to appear on the road
+	        if (player.getY() < config.GRASSSPOS) { // player is on the road
+	            if (Math.random() < (1 / config.NOOFENEMIES)) { // start chasing (maybe)
+	                this.x = this.x+10;
+	                if (this.x >= 0) {
+	                    this.state = "chasing"
+	                    this.x = 0;
+	                    //this.y = Math.trunc(this.y)
+	                    console.log('enemy# ' + this.no + ', state ' + this.state + ' at x ' + this.x + ' y ' + this.y);
+	                };
+	            };
 			};
 			break
 		case "chasing": // chase the player 
@@ -139,23 +145,23 @@ Enemy.prototype.update = function(dt) {
 			var diff = this.y - player.getY(); // close in on the player
 			if(diff < 0) this.y = this.y + config.SCRYSTEP; // change to another lane
 			if(diff > 0) this.y = this.y - config.SCRYSTEP; // change to another lane 
-			if(diff == 0) this.x = this.x + 1; // go one step forward 
+			if(diff == 0) this.x++; // go one step forward 
 			if(this.y<config.ROADSPOS) this.y = config.ROADSPOS; // check that only the road is used
 			if(this.y>config.ROADEPOS) this.y = config.ROADEPOS;
 			if(this.x>=config.SCRWIDTH) this.state = 'offscreen'; // check for off screen
 			this.x = Math.round(this.x);
 			this.y = Math.round(this.y);
-			// Place taken?
-			if (this.checkFreespace(this.no, this.x+config.SCRXSTEP, this.y) == true) {
-				this.x++;
-//				if(this.checkFreespace(this.no, this.x-SCRXSTEP,this.y) == true) {this.x = this.x-SCRXSTEP} else
-//				if(this.checkFreespace(this.no, this.x,this.y-SCRYSTEP) == true) {this.y = this.y-SCRYSTEP} else
-//				if(this.checkFreespace(this.no, this.x,this.y+SCRYSTEP) == true) {this.y = this.y+SCRYSTEP};
+		    // Place taken?
+			if (player.getY() < config.GRASSSPOS) { // player is on the road
+			    if (this.checkTaken(this.no, this.x + config.SCRXSTEP, this.y) == true) {
+			        this.x++;
+			    }
 			}
 			break;			
 		case 'offscreen': // run off the screen 
 			console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
 			this.y = this.y - (this.y % config.SCRYSTEP);
+			this.resetGame();
 			break;
 		case 'gothim': // got the player
 			console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
@@ -324,7 +330,8 @@ function restartGame() { // resetGame the game either because the player was cau
 var allEnemies = [];
 var number_of_enemies = config.NOOFENEMIES;
 for (i = 0; i < number_of_enemies; i++) { 
-	allEnemies.push(new Enemy(i+1)); // create new enemy with enemy number
+    allEnemies.push(new Enemy(i+1)); // create new enemy with enemy number 
+    this.delay = config.ENEMYDELAY;
 };
 // Place the player object in a variable called player
 var player = new Player(config.PLSTARTPOSX, config.PLSTARTPOSY);  // Player instance wit start position parameters
