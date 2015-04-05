@@ -37,13 +37,13 @@ var config = {
 	GRASSEPOS:5*83,
 	PLSTARTPOSX:2*101,
 	PLSTARTPOSY:5*83,
-	NOOFENEMIES:4,
-	SCRXSTEP:101,
+	NOOFENEMIES:2,
+    //	SCRXSTEP:101,
+    SCRXSTEP:1,
 	SCRYSTEP:83,
 	SCRXFACTOR:1,
 	SCRYFACTOR:1,
-	ENEMYDELAY:1,
-	NOOFLANES:3
+	ENEMYDELAY:100
 };
 
 var player = new Player(config.PLSTARTPOSX, config.PLSTARTPOSY); // Declare the player with start position
@@ -51,23 +51,19 @@ var player = new Player(config.PLSTARTPOSX, config.PLSTARTPOSY); // Declare the 
 // Enemies our player must avoid
 var Enemy = function(no) {
 	this.no = no;
-	this.x = -config.SCRXSTEP*no;
+	this.x = -config.SCRXSTEP;
 	this.y = config.SCRYSTEP;
-	this.lane = -1;
+	this.delay = config.ENEMYDELAY;
 	this.remdelay = 0;
-	this.speed = this.getSpeed();
+	this.speed = speed();
 	this.state = '';
-	this.sprite = 'images/enemy-bug.png';
-    console.log('enemy# ' + this.no + ', state ' + this.state + ' at x ' + this.x + ' y ' + this.y);
+    this.sprite = 'images/enemy-bug.png';
 };
 //
 // Enemy functions
 //
 Enemy.prototype.setNo = function(no) { //provide each enemy with a number
 	this.no = no;
-};
-Enemy.prototype.getNo = function () {
-    return this.no;
 };
 Enemy.prototype.setPosition = function(x,y) { 
 	this.x = x;
@@ -94,29 +90,36 @@ Enemy.prototype.getState = function() {
 Enemy.prototype.setSpeed = function(speed) {
 	this.speed = speed;
 };
-Enemy.prototype.getSpeed = function() {
+Enemy.prototype.setLaneno = function() { // select a lane
+	var lane = Math.random()*4;
+	lane = Math.trunc(lane) * config.SCRYSTEP;
+//	lane = lane - (lane % config.SCRYSTEP);
+//	lane = lane + config.SCRYSTEP;
+	return lane;
+};
+function speed() { // select speed factor
 	return Math.random()*2;
 };
 
 Enemy.prototype.resetGame = function() {
-    this.x = -config.SCRXSTEP * this.no;
-    this.y = config.SCRYSTEP;
-    this.lane = -1;
-	this.state = 'waiting';
-	this.speed = this.getSpeed();
+		this.x = -1*config.SCRXSTEP;
+		this.y = this.setLaneno();
+		this.state = '';
+		this.speed = speed();
 };
-Enemy.prototype.checkTaken = function (no, x, y) { // check for free place
-//    console.log('checkFreespace: enemy# ' + no + ' x ' + x + ' y ' + y);
-	for (i = 0; i < allEnemies.length; i++) {
-//	    var diff = allEnemies[i].getX() - (x + config.SCRXSTEP); 
-//	    console.log('checkFreespace: for enemy# ' + allEnemies[i].getNo() + ', state ' + allEnemies[i].getState() + ' x ' + allEnemies[i].getX() + ' y ' + allEnemies[i].getY()+ ' diff ' + diff);
-	    if ((y == allEnemies[i].getY()) && (x + config.SRXSTEP >= allEnemies[i].getX()) && (no != allEnemies[i].no)) { // place taken	
-	        console.log('checkFreespace: taken enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' + this.y);
-	        return false;
-	    };
-	};
-//	console.log('checkFreespace: free enemy# ' + no + '  x ' + x + ' y ' + y);
-	return true;
+Enemy.prototype.checkFreespace = function(no, x, y) { // check for free space
+	console.log('checkFreespace I am enemy# ' + no + ' x ' + x + ' y ' +  y);
+	returnvalue = true;
+	allEnemies.forEach(function(enemy) {
+		console.log('checkFreespace testing enemy# ' + enemy.no + ' x ' + enemy.x + ' y ' +  enemy.y);
+		if ((x == enemy.getX()) && (y == enemy.getY()) && (no != enemy.no)) { // place taken
+			console.log('checkFreespace no free space enemy# ' + enemy.no + ' x ' + enemy.x + ' y ' +  enemy.y);
+			returnvalue = false;
+			return;
+		};
+	});
+	console.log('checkFreespace true enemy# ' + no + ' x ' + x + ' y ' +  y);
+	return returnvalue;
 };
 	
 // Update the enemy's position, required method for game
@@ -126,42 +129,42 @@ Enemy.prototype.update = function(dt) {
 	this.remdelay=this.delay;
 	// Enemy state handling - this is where enemy behaviour is controlled
 	switch (this.state) {
-	    case "":
-	    case "waiting": // wait for the player to appear on the road
-	        if (player.getY() < config.GRASSSPOS) { // player is on the road
-	            if (Math.random() < (1 / config.NOOFENEMIES)) { // start chasing (maybe)
-	                this.x = this.x+10;
-	                if (this.x >= 0) {
-	                    this.state = "chasing"
-	                    this.x = 0;
-	                    //this.y = Math.trunc(this.y)
-	                    console.log('enemy# ' + this.no + ', state ' + this.state + ' at x ' + this.x + ' y ' + this.y);
-	                };
-	            };
+		case "":
+		case "waiting": // wait for the player to appear on the road
+			//console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y + ' GRASSSPOS ' + config.GRASSSPOS + ' player.getY() ' + player.getY());
+			if(player.getY() < config.GRASSSPOS) { // player is on the road
+//				if (Math.random() < (1/config.NOOFENEMIES)) { // start chasing (maybe)
+					this.state = "chasing"
+					this.x = 0;
+					this.y = Math.trunc(this.y)
+//				};
 			};
 			break
 		case "chasing": // chase the player 
-			//console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
+			console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
 			var diff = this.y - player.getY(); // close in on the player
 			if(diff < 0) this.y = this.y + config.SCRYSTEP; // change to another lane
 			if(diff > 0) this.y = this.y - config.SCRYSTEP; // change to another lane 
-			if(diff == 0) this.x++; // go one step forward 
+			if(diff == 0) this.x = this.x + config.SCRXSTEP; // go one step forward 
 			if(this.y<config.ROADSPOS) this.y = config.ROADSPOS; // check that only the road is used
 			if(this.y>config.ROADEPOS) this.y = config.ROADEPOS;
 			if(this.x>=config.SCRWIDTH) this.state = 'offscreen'; // check for off screen
 			this.x = Math.round(this.x);
 			this.y = Math.round(this.y);
-		    // Place taken?
-			if (player.getY() < config.GRASSSPOS) { // player is on the road
-			    if (this.checkTaken(this.no, this.x + config.SCRXSTEP, this.y) == true) {
-			        this.x++;
-			    }
+			// Place taken?
+			if (this.checkFreespace(this.no, this.x+config.SCRXSTEP, this.y) == true) {
+				this.x = this.x+config.SCRXSTEP
+//				console.log('no free space enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
+//				if(this.checkFreespace(this.no, this.x-SCRXSTEP,this.y) == true) {this.x = this.x-SCRXSTEP} else
+//				if(this.checkFreespace(this.no, this.x,this.y-SCRYSTEP) == true) {this.y = this.y-SCRYSTEP} else
+//				if(this.checkFreespace(this.no, this.x,this.y+SCRYSTEP) == true) {this.y = this.y+SCRYSTEP};
+			} else {
+				console.log('no free space enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
 			}
 			break;			
 		case 'offscreen': // run off the screen 
 			console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
 			this.y = this.y - (this.y % config.SCRYSTEP);
-			this.resetGame();
 			break;
 		case 'gothim': // got the player
 			console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
@@ -216,6 +219,7 @@ function Player(x, y) {
 	this.render = function() {
 		if (this.getState() == 'dying') {
 			ctx.drawImage(Resources.get('images/char-boy-inv.png'), this.x*config.SCRXFACTOR, this.y*config.SCRYFACTOR); 
+			console.log('player dying at x ' + this.x + ', y ' + this.y);
 			this.setState('dead');
 			return true;
 		};
@@ -252,7 +256,7 @@ function Player(x, y) {
 		if (this.x>=config.SCRWIDTH-config.SCRXSTEP) {this.x=config.SCRWIDTH-config.SCRXSTEP};
 		if (this.y>config.SCREPOS) {this.y=config.SCREPOS};
 		this.render(); // call render function right away
-		//console.log('player ' + key + ' x ' + this.x + ', y ' + this.y);
+		console.log('player ' + key + ' x ' + this.x + ', y ' + this.y);
 		return true;
 	};
 };
@@ -285,7 +289,7 @@ function checkCollisions() { // check that the player has collided with one of t
 	allEnemies.forEach(function(enemy) {
 		if (player.getX() == enemy.getX() && player.getY() == enemy.getY()) {
 			player.setState('dying'); // the dying / dead states are used to make the collision visible (allowing for an extra screen refresh)
-			console.log('collision: with enemy# ' + enemy.no + ' at x ' + player.getX() + ', y ' + player.getY());
+			console.log('collision: between player and enemy ' + enemy.no + ' at x ' + player.getX() + ', y ' + player.getY());
 			returnvalue = true;
 		};
 	});
@@ -330,8 +334,7 @@ function restartGame() { // resetGame the game either because the player was cau
 var allEnemies = [];
 var number_of_enemies = config.NOOFENEMIES;
 for (i = 0; i < number_of_enemies; i++) { 
-    allEnemies.push(new Enemy(i+1)); // create new enemy with enemy number 
-    this.delay = config.ENEMYDELAY;
+	allEnemies.push(new Enemy(i+1)); // create new enemy with enemy number
 };
 // Place the player object in a variable called player
 var player = new Player(config.PLSTARTPOSX, config.PLSTARTPOSY);  // Player instance wit start position parameters
