@@ -2,164 +2,155 @@
 // Frogger is a simple arcade style game to be run in a browser.
 // It features a single screen consisting of three parts, a strip of water, a 3 lane street and a piece of grass.  
 // It is now the objective of the hero (here called the player) to cross the road to the water. 
-// The tricky part is the road where there may bugs. 
+// The tricky part is the road where there may bugs.
+//
+// Version 1: Mar 22, 2015
+// Initial version
+// Version 2: Mar 25, 2015
+// Improved code style
+// Version 3: 7 April 2015
+// Enemies nov moving pixelwise plus numerous improvements
 //
 
 //constants
 var config = {
 	FROGGER:'FROGGER',
-//	SCRWIDTH:5, // screen is a 5 x 6 matrix
-//	SCRHEIGHT:6,
-//	SCRSPOS:0,
-//	SCREPOS:5,
-//	WATERSPOS:0,
-//	WATEREPOS:0,
-//	ROADSPOS:1,
-//	ROADHEPOS:3,
-//	GRASSSPOS:4,
-//	GRASSEPOS:5,
-//	PLSTARTPOSX:2,
-//	PLSTARTPOSY:5,
-//	NOOFENEMIES:4,
-//	SCRXFACTOR:101,
-//	SCRYFACTOR:83,
-//	ENEMYDELAY:10
 
+	SCRXSTEP: 101,
+	SCRYSTEP: 83,
+	SCRXFACTOR: 1,
+	SCRYFACTOR: 1,
 	SCRWIDTH:5*101, // screen is a 5 x 6 matrix
 	SCRHEIGHT:6*83,
 	SCRSPOS:0,
 	SCREPOS:5*83,
-	WATERSPOS:0,
+	WATERSPOS: 0,
 	WATEREPOS:0,
 	ROADSPOS:1*83,
 	ROADEPOS:3*83,
 	GRASSSPOS:4*83,
 	GRASSEPOS:5*83,
-	PLSTARTPOSX:2*101,
-	PLSTARTPOSY:5*83,
-	NOOFENEMIES:2,
-    //	SCRXSTEP:101,
-    SCRXSTEP:1,
-	SCRYSTEP:83,
-	SCRXFACTOR:1,
-	SCRYFACTOR:1,
-	ENEMYDELAY:100
+	PLRSTARTPOSX:2*101,
+	PLRSTARTPOSY: 5 * 83,
+    ENMXSTEP:1,
+	NOOFENEMIES:4,
+	ENEMYDELAY:1
 };
 
-var player = new Player(config.PLSTARTPOSX, config.PLSTARTPOSY); // Declare the player with start position
-
-// Enemies our player must avoid
+//
+// Enemy constructor
+//
 var Enemy = function(no) {
 	this.no = no;
-	this.x = -config.SCRXSTEP;
+	this.x = -config.SCRXSTEP*this.no;
 	this.y = config.SCRYSTEP;
 	this.delay = config.ENEMYDELAY;
 	this.remdelay = 0;
-	this.speed = speed();
+	this.speed = 1;
 	this.state = '';
     this.sprite = 'images/enemy-bug.png';
 };
+
 //
-// Enemy functions
+// Enemy methods
 //
-Enemy.prototype.setNo = function(no) { //provide each enemy with a number
+Enemy.prototype.setNo = function(no) { 
 	this.no = no;
 };
+
 Enemy.prototype.setPosition = function(x,y) { 
 	this.x = x;
 	this.y = y;
 };
+
 Enemy.prototype.getX = function() {
 	return this.x;
 };
+
 Enemy.prototype.getY = function() {
 	return this.y;
 };
+
 Enemy.prototype.setX = function(x) {
 	this.x = x;
 };
+
 Enemy.prototype.sety = function(y) {
 	this.y = y;
-};	
+};
+
 Enemy.prototype.setState = function(state) {
 	this.state = state;
 };
+
 Enemy.prototype.getState = function() {
 	return this.state;
 };
-Enemy.prototype.setSpeed = function(speed) {
-	this.speed = speed;
-};
+
 Enemy.prototype.setLaneno = function() { // select a lane
-	var lane = Math.random()*4;
+	var lane = Math.random()*3 + 1;
 	lane = Math.trunc(lane) * config.SCRYSTEP;
-//	lane = lane - (lane % config.SCRYSTEP);
-//	lane = lane + config.SCRYSTEP;
 	return lane;
-};
-function speed() { // select speed factor
-	return Math.random()*2;
 };
 
 Enemy.prototype.resetGame = function() {
-		this.x = -1*config.SCRXSTEP;
-		this.y = this.setLaneno();
-		this.state = '';
-		this.speed = speed();
+    this.x = -config.SCRXSTEP * this.no;
+	this.y = this.setLaneno();
+	this.state = '';
+	this.speed++;
 };
+
 Enemy.prototype.checkFreespace = function(no, x, y) { // check for free space
-	console.log('checkFreespace I am enemy# ' + no + ' x ' + x + ' y ' +  y);
-	returnvalue = true;
-	allEnemies.forEach(function(enemy) {
-		console.log('checkFreespace testing enemy# ' + enemy.no + ' x ' + enemy.x + ' y ' +  enemy.y);
-		if ((x == enemy.getX()) && (y == enemy.getY()) && (no != enemy.no)) { // place taken
-			console.log('checkFreespace no free space enemy# ' + enemy.no + ' x ' + enemy.x + ' y ' +  enemy.y);
-			returnvalue = false;
-			return;
+	for (i = 0; i < allEnemies.length; i++) {
+	    if ((x == allEnemies[i].getX()) && (y == allEnemies[i].getY()) && (no != allEnemies[i].no)) { // place taken
+	        console.log('checkFreespace: no free space enemy# ' + allEnemies[i].no + ' x ' + allEnemies[i].x + ' y ' +  allEnemies[i].y);
+			return false;
 		};
-	});
-	console.log('checkFreespace true enemy# ' + no + ' x ' + x + ' y ' +  y);
-	return returnvalue;
+	};
+	return true;
 };
 	
 // Update the enemy's position, required method for game
 // Parameter: dt, a time delta between ticks
 Enemy.prototype.update = function(dt) {
-	if (--this.remdelay >0) return; //delay slowing the enemy down so that the player has a chance
+	if (--this.remdelay >0) return; //delay the enemy so that the player has a chance
 	this.remdelay=this.delay;
 	// Enemy state handling - this is where enemy behaviour is controlled
 	switch (this.state) {
 		case "":
-		case "waiting": // wait for the player to appear on the road
-			//console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y + ' GRASSSPOS ' + config.GRASSSPOS + ' player.getY() ' + player.getY());
-			if(player.getY() < config.GRASSSPOS) { // player is on the road
-//				if (Math.random() < (1/config.NOOFENEMIES)) { // start chasing (maybe)
-					this.state = "chasing"
-					this.x = 0;
-					this.y = Math.trunc(this.y)
-//				};
-			};
+	    case "waiting": // wait for the player to appear on the road
+	        if (player.getY() < config.GRASSSPOS) { // player is on the road
+	            this.x = this.x + config.ENMXSTEP * this.speed;
+	            if (this.x >= 0) { // player is ready
+	                if (Math.random() < (1/config.NOOFENEMIES)) { // start chasing (maybe)
+	                    this.state = "chasing"
+	                    this.x = 0;
+	                    this.y = Math.trunc(this.y)
+	                    console.log('enemy# ' + this.no + ', state ' + this.state + ' at  x ' + this.x + ', y ' + this.y);
+	                };
+	            };
+	        };
 			break
-		case "chasing": // chase the player 
-			console.log('enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
+	    case "chasing": // chase the player 
+            //
+            // close in on the player maybe changing lane
 			var diff = this.y - player.getY(); // close in on the player
 			if(diff < 0) this.y = this.y + config.SCRYSTEP; // change to another lane
 			if(diff > 0) this.y = this.y - config.SCRYSTEP; // change to another lane 
-			if(diff == 0) this.x = this.x + config.SCRXSTEP; // go one step forward 
+		    //
+            // handle boundary conditions
 			if(this.y<config.ROADSPOS) this.y = config.ROADSPOS; // check that only the road is used
-			if(this.y>config.ROADEPOS) this.y = config.ROADEPOS;
-			if(this.x>=config.SCRWIDTH) this.state = 'offscreen'; // check for off screen
+			if (this.y > config.ROADEPOS) this.y = config.ROADEPOS;
+			if (this.x >= config.SCRWIDTH) this.state = 'offscreen'; // check for off screen
+            // make sure this is an integer
 			this.x = Math.round(this.x);
 			this.y = Math.round(this.y);
-			// Place taken?
-			if (this.checkFreespace(this.no, this.x+config.SCRXSTEP, this.y) == true) {
-				this.x = this.x+config.SCRXSTEP
-//				console.log('no free space enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
-//				if(this.checkFreespace(this.no, this.x-SCRXSTEP,this.y) == true) {this.x = this.x-SCRXSTEP} else
-//				if(this.checkFreespace(this.no, this.x,this.y-SCRYSTEP) == true) {this.y = this.y-SCRYSTEP} else
-//				if(this.checkFreespace(this.no, this.x,this.y+SCRYSTEP) == true) {this.y = this.y+SCRYSTEP};
-			} else {
-				console.log('no free space enemy# ' + this.no + ', state ' + this.state + ' x ' + this.x + ' y ' +  this.y);
+            //
+			// advance
+			if (this.checkFreespace(this.no, this.x + config.SCRXSTEP, this.y) == true) { // check for vacant place
+			    if (player.getY() < config.GRASSSPOS) { // player is in the grass area so we wait
+			        this.x = this.x + config.ENMXSTEP * this.speed; // move forward depending on speed
+			    }
 			}
 			break;			
 		case 'offscreen': // run off the screen 
@@ -180,9 +171,7 @@ Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x*config.SCRXFACTOR, this.y*config.SCRYFACTOR);
 };
 
-// This is the player class
-// It requires an update(), render() and
-// a handleInput() method.
+// This is the Player class
 function Player(x, y) {
 	this.sprite = 'images/char-boy.png'
 	this.collision_sprite = 'images/char-boy-inv.png';
@@ -208,9 +197,8 @@ function Player(x, y) {
 		this.state = state;
 	};
 	this.update = function(dt) {
-		if (this.state == 'dead') restartGame();
-		if (this.state == 'winner') restartGame();
-		if (checkCollisions() == false) {
+	    if (this.state == 'dead' || this.state == 'winner') restartGame();
+		if (checkCollision() == false) {
 			checkWater();
 		};
 		if (checkEndofgame() == true) restartGame();
@@ -219,12 +207,10 @@ function Player(x, y) {
 	this.render = function() {
 		if (this.getState() == 'dying') {
 			ctx.drawImage(Resources.get('images/char-boy-inv.png'), this.x*config.SCRXFACTOR, this.y*config.SCRYFACTOR); 
-			console.log('player dying at x ' + this.x + ', y ' + this.y);
 			this.setState('dead');
 			return true;
 		};
 		if (this.getState() == 'dead') {
-			console.log('player now dead at x ' + this.x + ', y ' + this.y);
 			this.setState('waiting');
 			restartGame();
 			return true;
@@ -261,7 +247,7 @@ function Player(x, y) {
 	};
 };
 
-// A listener is set up for key presses and sends the keys to the
+// A listener is set up for key presses and send the keys to the
 // Player.handleInput() method.
 document.addEventListener('keyup', function(e) {
     var allowedKeys = {
@@ -276,29 +262,29 @@ document.addEventListener('keyup', function(e) {
 
 function checkEndofgame() { // are all the enemies off the screen?
 	var ctr = allEnemies.length;
-	allEnemies.forEach(function(enemy) {
-		if (enemy.getState() == 'offscreen') {
+	for (i = 0; i < allEnemies.length; i++) {
+	    if (allEnemies[i].getState() == 'offscreen') {
 			ctr--;
 		};
-	});
+	};
 	if (ctr == 0) { return true } else { return false };
 };
 
-function checkCollisions() { // check that the player has collided with one of the enemies
-	var returnvalue = false;
-	allEnemies.forEach(function(enemy) {
-		if (player.getX() == enemy.getX() && player.getY() == enemy.getY()) {
+function checkCollision() { // check that the player has collided with one of the enemies
+	for (i = 0; i < allEnemies.length; i++) {
+	    var diff = player.getX() - allEnemies[i].getX()
+	    if (player.getY() == allEnemies[i].getY() && diff >= 0 && diff < (config.SCRXSTEP / 10)) { // is enemy inside player (90%)
 			player.setState('dying'); // the dying / dead states are used to make the collision visible (allowing for an extra screen refresh)
-			console.log('collision: between player and enemy ' + enemy.no + ' at x ' + player.getX() + ', y ' + player.getY());
-			returnvalue = true;
+			console.log('collision: between player at x ' + player.getX() + ', y ' + player.getY());
+			console.log('collosion: and enemy at ' + allEnemies[i].no + ' at x ' + allEnemies[i].getX() + ', y ' + allEnemies[i].getY() + ' at speedfactor ' + allEnemies[i].speed);
+			return true;
 		};
-	});
-	return returnvalue;
+	};
+	return false;
 };
 
 function checkWater() { // check whether the player is in the water
-	if (player.getY() < 1) { // we are in the water
-		//player.render();
+	if (player.getY() < 1) {
 		console.log('the player reached the water: x ' + player.getX() + ', y ' + player.getY());
 		player.setState('winner');
 		return true;
@@ -321,27 +307,20 @@ function restartGame() { // resetGame the game either because the player was cau
 	allEnemies.forEach(function(enemy) {
 		enemy.resetGame();
 	});
-	player.setX(config.PLSTARTPOSX); // resetGame player
-	player.sety(config.PLSTARTPOSY);
+	player.setX(config.PLRSTARTPOSX); // resetGame player
+	player.sety(config.PLRSTARTPOSY);
 	player.setState('waiting');
 };
 
 //
 // main body
 //
-// - objects are instantiated
-// - enemy objects are placed in an array
 var allEnemies = [];
 var number_of_enemies = config.NOOFENEMIES;
 for (i = 0; i < number_of_enemies; i++) { 
 	allEnemies.push(new Enemy(i+1)); // create new enemy with enemy number
 };
-// Place the player object in a variable called player
-var player = new Player(config.PLSTARTPOSX, config.PLSTARTPOSY);  // Player instance wit start position parameters
+var player = new Player(config.PLRSTARTPOSX, config.PLRSTARTPOSY);  // Player instance wit start position parameters
 
 alert('Start the game using the arrow keys');
 	
-
-
-
-
